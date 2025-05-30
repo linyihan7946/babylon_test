@@ -9,9 +9,10 @@
   },
   "dependencies": {
     "vue": "^3.3.0",
-    "@babylonjs/core": "^6.0.0",
-    "@babylonjs/gui": "^6.0.0",
-    "@babylonjs/loaders": "^6.0.0"
+    "@babylonjs/core": "8.10.0",
+    "@babylonjs/gui": "8.10.0",
+    "@babylonjs/loaders": "8.10.0",
+    "@babylonjs/materials": "8.10.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.0",
