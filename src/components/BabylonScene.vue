@@ -14,14 +14,11 @@ export default defineComponent({
     const canvas = ref<HTMLCanvasElement | null>(null)
     let babylonCore: BabylonCore | null = null
 
-    onMounted(() => {
+    onMounted(async () => {
       if (!canvas.value) return
-
-      // 初始化Babylon场景
       babylonCore = new BabylonCore(canvas.value)
+      await babylonCore.ready // 等待初始化完成
       babylonCore.startRenderLoop()
-
-      // 处理窗口大小变化
       window.addEventListener('resize', handleResize)
     })
 

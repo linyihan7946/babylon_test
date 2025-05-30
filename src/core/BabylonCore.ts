@@ -1,15 +1,36 @@
-import { Engine, Scene, Vector3, HemisphericLight, MeshBuilder, ArcRotateCamera } from '@babylonjs/core'
+import { Engine, Scene, Vector3, HemisphericLight, MeshBuilder, ArcRotateCamera, WebGPUEngine } from '@babylonjs/core'
 
 export class BabylonCore {
-  private engine: Engine
-  private scene: Scene
+  private engine!: Engine | WebGPUEngine
+  private scene!: Scene
   private canvas: HTMLCanvasElement
+  public ready: Promise<void>
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
-    this.engine = new Engine(canvas, true)
+    this.ready = this.init()
+  }
+
+  private async init() {
+    await this.initEngine()
     this.scene = new Scene(this.engine)
     this.initScene()
+  }
+
+  private async initEngine() {
+    try {
+      // 尝试创建WebGPU引擎
+      const webgpuEngine = await WebGPUEngine.CreateAsync(this.canvas, {
+        antialias: true,
+        adaptToDeviceRatio: true
+      })
+      this.engine = webgpuEngine
+      console.log('WebGPU引擎初始化成功')
+    } catch (error) {
+      // 如果WebGPU不可用，回退到WebGL
+      console.log('WebGPU不可用，使用WebGL引擎')
+      this.engine = new Engine(this.canvas, true)
+    }
   }
 
   private initScene(): void {
