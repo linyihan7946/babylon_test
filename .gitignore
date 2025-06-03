@@ -2,6 +2,7 @@
 node_modules
 dist
 dist-ssr
+public
 
 # 本地环境文件
 .env
