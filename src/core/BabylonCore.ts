@@ -26,17 +26,16 @@ export class BabylonCore {
 
   private async initEngine() {
     try {
-      // 尝试创建WebGPU引擎
-      const webgpuEngine = await WebGPUEngine.CreateAsync(this.canvas, {
+      // 直接使用WebGL2.0引擎
+      this.engine = new Engine(this.canvas, true, {
         antialias: true,
-        adaptToDeviceRatio: true
-      })
-      this.engine = webgpuEngine
-      console.log('WebGPU引擎初始化成功')
+        adaptToDeviceRatio: true,
+        powerPreference: "high-performance"
+      });
+      console.log('WebGL2.0引擎初始化成功');
     } catch (error) {
-      // 如果WebGPU不可用，回退到WebGL
-      console.log('WebGPU不可用，使用WebGL引擎')
-      this.engine = new Engine(this.canvas, true)
+      console.error('WebGL2.0引擎初始化失败:', error);
+      throw error;
     }
   }
 
