@@ -45,13 +45,13 @@ export class BabylonCore {
       'camera',
       0,
       Math.PI / 2,  // 调整俯仰角
-      500,          // 调整相机距离
+      50,          // 调整相机距离
       Vector3.Zero(),
       this.scene
     )
     this.camera.attachControl(this.canvas, true)
-    this.camera.lowerRadiusLimit = 100
-    this.camera.upperRadiusLimit = 2000
+    this.camera.lowerRadiusLimit = 10
+    this.camera.upperRadiusLimit = 200
     this.camera.wheelDeltaPercentage = 0.01
     this.camera.panningSensibility = 0  // 禁用平移
     this.camera.allowUpsideDown = false // 禁止相机翻转
@@ -59,15 +59,19 @@ export class BabylonCore {
     // 创建光源
     new HemisphericLight('light', new Vector3(0, 1, 0), this.scene)
 
-    // 创建一个球体
-    const sphere = MeshBuilder.CreateSphere('sphere', { diameter: 100 }, this.scene)
-    const sphereMaterial = new StandardMaterial('sphereMaterial', this.scene)
-    sphereMaterial.diffuseColor = new Color3(1, 0, 0)
-    sphereMaterial.alpha = 0.5
-    sphere.material = sphereMaterial
+    // // 创建一个球体
+    // const sphere = MeshBuilder.CreateSphere('sphere', { diameter: 10 }, this.scene)
+    // const sphereMaterial = new StandardMaterial('sphereMaterial', this.scene)
+    // sphereMaterial.diffuseColor = new Color3(1, 0, 0)
+    // sphereMaterial.alpha = 0.5
+    // sphere.material = sphereMaterial
 
     // 加载点云文件
-    this.loadPointCloud('./dolphins_colored（二进制）.spz').catch(error => {
+    // const url = "https://assets.babylonjs.com/splats/gs_Skull.splat";
+    // const url = 'https://raw.githubusercontent.com/CedricGuillemet/dump/master/Halo_Believe.splat';
+    const url = "https://raw.githubusercontent.com/CedricGuillemet/dump/master/racoonfamily.spz";
+    // const url = './dolphins_colored（二进制）.spz';
+    this.loadPointCloud(url).catch(error => {
       console.error('初始化点云加载失败:', error)
     })
   }
@@ -92,9 +96,9 @@ export class BabylonCore {
     try {
       // 根据文件扩展名选择加载器
       let mesh: Mesh;
-      if (url.toLowerCase().endsWith('.spz')) {
+      if (url.toLowerCase().endsWith('.spz') || url.toLowerCase().endsWith('.splat')) {
         const node = await this.spzLoader.load(url);
-        mesh = node.getChildMeshes()[0] as Mesh;
+        mesh = node as Mesh;
       } else if (url.toLowerCase().endsWith('.ply')) {
         mesh = await this.plyLoader.load(url);
       } else {
@@ -107,15 +111,17 @@ export class BabylonCore {
       const center = boundingBox.centerWorld
       const size = boundingBox.maximumWorld.subtract(boundingBox.minimumWorld)
       const maxDimension = Math.max(size.x, size.y, size.z)
+      console.log(maxDimension)
 
       // 调整相机位置
       this.camera.target = center
-      this.camera.radius = maxDimension * 2
+      this.camera.radius = maxDimension * 5
+      this.camera.upperRadiusLimit = maxDimension / 2 - maxDimension / 10
       this.camera.alpha = 0
       this.camera.beta = Math.PI / 3
 
       // 设置点大小
-      this.setPointSize(100)
+      this.setPointSize(1)
 
     } catch (error) {
       console.error('加载点云数据失败:', error)
