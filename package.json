@@ -8,11 +8,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.3.0",
     "@babylonjs/core": "8.10.0",
     "@babylonjs/gui": "8.10.0",
-    "@babylonjs/loaders": "8.10.0",
-    "@babylonjs/materials": "8.10.0"
+    "@babylonjs/loaders": "^8.10.0",
+    "@babylonjs/materials": "8.10.0",
+    "@types/pako": "^2.0.3",
+    "pako": "^2.1.0",
+    "vue": "^3.3.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.0",
