@@ -4,7 +4,7 @@ export class PLYLoader {
   private _scene: BABYLON.Scene;
   private _engine: BABYLON.Engine;
   private _currentMesh?: BABYLON.Mesh;
-  private _pointSize: number = 0.1;
+  private _pointSize: number = 1;
 
   constructor(scene: BABYLON.Scene) {
     this._scene = scene;
@@ -133,14 +133,21 @@ export class PLYLoader {
 
     // 创建材质
     const material = new BABYLON.StandardMaterial(name + "_material", this._scene);
-    material.emissiveColor = new BABYLON.Color3(0, 1, 1);
+    material.emissiveColor = new BABYLON.Color3(1, 1, 1);
     material.pointSize = this._pointSize;
     material.disableLighting = true;
+    material.alpha = 1.0;
+    material.backFaceCulling = false;
     mesh.material = material;
 
     // 设置绘制模式为点
-    mesh.setEnabled(false);
     mesh.isVisible = true;
+
+    console.log('点云创建完成:', {
+      vertexCount: data.count,
+      pointSize: this._pointSize,
+      hasColors: !!data.colors
+    });
 
     return mesh;
   }

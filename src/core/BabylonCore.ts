@@ -102,9 +102,6 @@ export class BabylonCore {
         throw new Error('不支持的文件格式，仅支持 .spz 和 .ply 文件')
       }
 
-      this.scene.addMesh(mesh)
-      // mesh.parent = this.scene.rootNode
-
       // 计算点云的边界框
       const boundingInfo = mesh.getBoundingInfo()
       const boundingBox = boundingInfo.boundingBox
@@ -112,14 +109,13 @@ export class BabylonCore {
       const size = boundingBox.maximumWorld.subtract(boundingBox.minimumWorld)
       const maxDimension = Math.max(size.x, size.y, size.z)
 
-      // // 调整相机位置
-      // this.camera.target = center
-      // this.camera.radius = maxDimension * 2
-      // this.camera.alpha = 0
-      // this.camera.beta = Math.PI / 3
+      // 调整相机位置
+      this.camera.target = center
+      this.camera.radius = maxDimension * 2
+      this.camera.alpha = 0
+      this.camera.beta = Math.PI / 3
 
       // 设置点大小
-      // this.setPointSize(maxDimension * 0.001)
       this.setPointSize(100)
 
     } catch (error) {
