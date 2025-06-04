@@ -68,7 +68,7 @@ export class BabylonCore {
     sphere.material = sphereMaterial
 
     // 加载点云文件
-    this.loadPointCloud('./dolphins_colored.ply').catch(error => {
+    this.loadPointCloud('./dolphins_colored（二进制）.spz').catch(error => {
       console.error('初始化点云加载失败:', error)
     })
   }
@@ -132,7 +132,7 @@ export class BabylonCore {
 
   // 设置点大小
   public setPointSize(size: number): void {
-    this.spzLoader.setPointSize(size)
+    // this.spzLoader.setPointSize(size)
     this.plyLoader.setPointSize(size)
   }
 } 
