@@ -1,4 +1,4 @@
-import { Engine, Scene, Vector3, HemisphericLight, MeshBuilder, ArcRotateCamera, WebGPUEngine, Mesh, StandardMaterial, Color3 } from '@babylonjs/core'
+import { Engine, Scene, Vector3, HemisphericLight, MeshBuilder, UniversalCamera, ArcRotateCamera, WebGPUEngine, Mesh, StandardMaterial, Color3 } from '@babylonjs/core'
 import { SPZLoader } from './SPZLoader'
 import { PLYLoader } from './PLYLoader'
 import { GltfLoader } from './GltfLoader'
@@ -11,7 +11,11 @@ export class BabylonCore {
   public ready: Promise<void>
   private spzLoader!: SPZLoader
   private plyLoader!: PLYLoader
-  private camera!: ArcRotateCamera
+  private arcRotateCamera!: ArcRotateCamera
+  private universalCamera!: UniversalCamera
+  private cameraType: 'arcRotate' | 'universal' = 'universal'
+  
+
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -43,21 +47,34 @@ export class BabylonCore {
 
   private initScene(): void {
     // 创建相机
-    this.camera = new ArcRotateCamera(
-      'camera',
-      0,
-      Math.PI / 2,  // 调整俯仰角
-      50,          // 调整相机距离
-      Vector3.Zero(),
-      this.scene
-    )
-    this.camera.attachControl(this.canvas, true)
-    this.camera.lowerRadiusLimit = 10
-    this.camera.upperRadiusLimit = 200
-    this.camera.wheelDeltaPercentage = 0.01
-    this.camera.panningSensibility = 0  // 禁用平移
-    this.camera.allowUpsideDown = false // 禁止相机翻转
-
+    if (this.cameraType === 'arcRotate') {
+      this.arcRotateCamera = new ArcRotateCamera(
+        'camera',
+        0,
+        Math.PI / 2,  // 调整俯仰角
+        50,          // 调整相机距离
+        Vector3.Zero(),
+        this.scene
+      )
+      this.arcRotateCamera.attachControl(this.canvas, true)
+      this.arcRotateCamera.lowerRadiusLimit = 10
+      this.arcRotateCamera.upperRadiusLimit = 200
+      this.arcRotateCamera.wheelDeltaPercentage = 0.01
+      this.arcRotateCamera.panningSensibility = 0  // 禁用平移
+      this.arcRotateCamera.allowUpsideDown = false // 禁止相机翻转
+    } else {
+      this.universalCamera = new UniversalCamera(
+        'camera',
+        new Vector3(0, 0, 0),
+        this.scene
+      )
+      this.universalCamera.attachControl(this.canvas, true)
+      this.universalCamera.inputs.addMouseWheel();
+      const mouseWheelInput: any = this.universalCamera.inputs.attached.mousewheel;
+      mouseWheelInput.wheelPrecisionX = 100;
+      mouseWheelInput.wheelPrecisionY = 100;
+      mouseWheelInput.wheelPrecisionZ = 100;
+    }
     // 创建光源
     new HemisphericLight('light', new Vector3(0, 1, 0), this.scene)
 
@@ -74,7 +91,7 @@ export class BabylonCore {
 
   public initMesh(): void {
     // 加载gltf文件
-    const gltfUrl = "./场景1.gltf";
+    const gltfUrl = "./场景2.gltf";
     GltfLoader.Instance.load(gltfUrl, this.scene).then((node) => {
       const meshes = node.getChildMeshes();
       const boundingBox = Geometry.Instance.getCombinedBoundingBox(meshes);
@@ -87,11 +104,30 @@ export class BabylonCore {
       );
       const maxDimension = Math.max(size.x, size.y, size.z)
       console.log(maxDimension)
-      this.camera.target = center
-      this.camera.radius = maxDimension * 5
-      this.camera.upperRadiusLimit = maxDimension / 2 - maxDimension / 10
-      this.camera.alpha = 0
-      this.camera.beta = Math.PI / 3
+      if (this.cameraType === 'arcRotate') {
+        this.arcRotateCamera.target = center
+        this.arcRotateCamera.radius = maxDimension * 5
+        this.arcRotateCamera.lowerRadiusLimit = 10
+        this.arcRotateCamera.upperRadiusLimit = maxDimension * 1.5;
+        this.arcRotateCamera.minZ = 10
+        this.arcRotateCamera.maxZ = maxDimension * 5
+        this.arcRotateCamera.alpha = 0
+        this.arcRotateCamera.beta = Math.PI / 3
+        this.arcRotateCamera.speed = 2;
+        this.arcRotateCamera.inertia = 0;
+      } else {
+        // this.universalCamera.target = new Vector3(-10694, -920, 7851);
+        const position = new Vector3(-15000, 1200, 9729);
+        this.universalCamera.position = position
+        this.universalCamera.target = position.clone().add(new Vector3(1000, 0, 0));
+        this.universalCamera.minZ = 10
+        this.universalCamera.maxZ = maxDimension * 5
+        this.universalCamera.speed = 5;
+        this.universalCamera.inertia = 0;
+        // this.universalCamera.radius = maxDimension * 5
+        // this.universalCamera.lowerRadiusLimit = 10
+        // this.universalCamera.upperRadiusLimit = maxDimension * 1.5;
+      }
 
       console.log('gltf加载完成')
     });
@@ -135,12 +171,18 @@ export class BabylonCore {
       console.log(maxDimension)
 
       // 调整相机位置
-      this.camera.target = center
-      this.camera.radius = maxDimension * 5
-      this.camera.upperRadiusLimit = maxDimension / 2 - maxDimension / 10
-      this.camera.alpha = 0
-      this.camera.beta = Math.PI / 3
-
+      if (this.cameraType === 'arcRotate') {
+        this.arcRotateCamera.target = center
+        this.arcRotateCamera.radius = maxDimension * 5
+        this.arcRotateCamera.upperRadiusLimit = maxDimension / 2 - maxDimension / 10
+        this.arcRotateCamera.alpha = 0
+        this.arcRotateCamera.beta = Math.PI / 3
+      } else {
+        this.universalCamera.target = center
+        // this.universalCamera.radius = maxDimension * 5
+        // this.universalCamera.lowerRadiusLimit = 10
+        // this.universalCamera.upperRadiusLimit = maxDimension * 1.5;
+      }
       // 设置点大小
       this.setPointSize(1)
 

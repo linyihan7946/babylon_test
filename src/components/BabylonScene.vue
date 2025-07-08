@@ -47,13 +47,16 @@ export default defineComponent({
 <style scoped>
 .babylon-container {
   width: 100%;
-  height: 90%;
-  /* margin: 0 auto; */
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
 }
 
 canvas {
   width: 100%;
   height: 100%;
+  display: block;
   outline: none;
+  border: none;
 }
 </style> 
