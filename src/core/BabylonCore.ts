@@ -6,6 +6,7 @@ import { Geometry } from './Geometry'
 import { SceneStats } from './SceneStats'
 import { MaterialOptimizer, MaterialCompareConfig, OptimizationResult } from './MaterialOptimizer'
 import { MeshInstancer, InstancerConfig, InstancerResult } from './MeshInstancer'
+import { MeshMerger, MergerConfig, MergeResult } from './MeshMerger'
 
 export class BabylonCore {
   private engine!: Engine | WebGPUEngine
@@ -23,6 +24,7 @@ export class BabylonCore {
   private sceneStats!: SceneStats
   private materialOptimizer!: MaterialOptimizer
   private meshInstancer!: MeshInstancer
+  private meshMerger!: MeshMerger
   
 
 
@@ -39,6 +41,7 @@ export class BabylonCore {
     this.sceneStats = new SceneStats(this.scene)
     this.materialOptimizer = new MaterialOptimizer(this.scene)
     this.meshInstancer = new MeshInstancer(this.scene)
+    this.meshMerger = new MeshMerger(this.scene)
     this.initScene()
     this.createFPSDisplay()
   }
@@ -143,7 +146,8 @@ export class BabylonCore {
       this.printSceneStatistics()
 
       this.optimizeSceneMaterials()
-      this.createMeshInstances()
+      // this.createMeshInstances()
+      this.mergeMeshes()
     });
   }
 
@@ -201,9 +205,6 @@ export class BabylonCore {
         this.arcRotateCamera.beta = Math.PI / 3
       } else {
         this.universalCamera.target = center
-        // this.universalCamera.radius = maxDimension * 5
-        // this.universalCamera.lowerRadiusLimit = 10
-        // this.universalCamera.upperRadiusLimit = maxDimension * 1.5;
       }
       // 设置点大小
       this.setPointSize(1)
@@ -312,5 +313,68 @@ export class BabylonCore {
     console.group('🔧 网格实例化建议')
     suggestions.forEach(suggestion => console.log(suggestion))
     console.groupEnd()
+  }
+
+  // 合并相同材质的网格
+  public mergeMeshes(config?: Partial<MergerConfig>): MergeResult {
+    if (config) {
+      this.meshMerger = new MeshMerger(this.scene, config)
+    }
+    return this.meshMerger.mergeMeshes()
+  }
+
+  // 获取网格合并建议
+  public getMeshMergeeSuggestions(): string[] {
+    return this.meshMerger.getOptimizationSuggestions()
+  }
+
+  // 打印网格合并建议
+  public printMeshMergeSuggestions(): void {
+    const suggestions = this.getMeshMergeeSuggestions()
+    console.group('🔧 网格合并建议')
+    suggestions.forEach(suggestion => console.log(suggestion))
+    console.groupEnd()
+  }
+
+  // 还原网格合并
+  public revertMeshMerging(): void {
+    this.meshMerger.revertMerging()
+  }
+
+  // 获取合并统计信息
+  public getMergeStatistics(): any {
+    return this.meshMerger.getMergeStatistics()
+  }
+
+  // 显示材质分组信息
+  public printMaterialGroupInfo(): void {
+    this.meshMerger.printMaterialGroupInfo()
+  }
+
+  // 执行完整的场景优化
+  public optimizeScene(config?: {
+    materialConfig?: Partial<MaterialCompareConfig>,
+    instanceConfig?: Partial<InstancerConfig>,
+    mergeConfig?: Partial<MergerConfig>
+  }): void {
+    console.log('🚀 开始完整场景优化...')
+    
+    // 1. 材质优化
+    console.log('\n1️⃣ 材质优化阶段')
+    this.optimizeSceneMaterials(config?.materialConfig)
+    
+    // 2. 网格实例化
+    console.log('\n2️⃣ 网格实例化阶段')
+    this.createMeshInstances(config?.instanceConfig)
+    
+    // 3. 网格合并
+    console.log('\n3️⃣ 网格合并阶段')
+    this.mergeMeshes(config?.mergeConfig)
+    
+    // 4. 显示最终统计
+    console.log('\n4️⃣ 优化完成，显示最终统计')
+    this.printSceneStatistics()
+    
+    console.log('✅ 场景优化完成!')
   }
 } 
