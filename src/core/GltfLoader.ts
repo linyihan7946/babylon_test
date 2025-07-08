@@ -55,10 +55,6 @@ export class GltfLoader {
                         }
                     });
 
-                    // 打印层级结构用于调试
-                    console.log("GLTF 层级结构:");
-                    this._printHierarchy(wrapperRoot, 0);
-
                     // 存储动画组引用
                     if (animationGroups.length > 0) {
                         console.log("可用动画:");

@@ -3,6 +3,7 @@ import { SPZLoader } from './SPZLoader'
 import { PLYLoader } from './PLYLoader'
 import { GltfLoader } from './GltfLoader'
 import { Geometry } from './Geometry'
+import { SceneStats } from './SceneStats'
 
 export class BabylonCore {
   private engine!: Engine | WebGPUEngine
@@ -17,6 +18,7 @@ export class BabylonCore {
   private fpsElement!: HTMLDivElement
   private lastFrameTime: number = 0
   private frameCount: number = 0
+  private sceneStats!: SceneStats
   
 
 
@@ -30,6 +32,7 @@ export class BabylonCore {
     this.scene = new Scene(this.engine)
     this.spzLoader = new SPZLoader(this.scene)
     this.plyLoader = new PLYLoader(this.scene)
+    this.sceneStats = new SceneStats(this.scene)
     this.initScene()
     this.createFPSDisplay()
   }
@@ -89,8 +92,6 @@ export class BabylonCore {
     // sphereMaterial.alpha = 0.5
     // sphere.material = sphereMaterial
     this.initMesh();
-
-    
   }
 
   public initMesh(): void {
@@ -128,12 +129,12 @@ export class BabylonCore {
         this.universalCamera.maxZ = maxDimension * 5
         this.universalCamera.speed = 5;
         this.universalCamera.inertia = 0;
-        // this.universalCamera.radius = maxDimension * 5
-        // this.universalCamera.lowerRadiusLimit = 10
-        // this.universalCamera.upperRadiusLimit = maxDimension * 1.5;
       }
 
       console.log('gltf加载完成')
+      
+      // 显示场景统计信息
+      this.printSceneStatistics()
     });
   }
 
@@ -198,6 +199,11 @@ export class BabylonCore {
       // 设置点大小
       this.setPointSize(1)
 
+      console.log('点云加载完成')
+      
+      // 显示场景统计信息
+      this.printSceneStatistics()
+
     } catch (error) {
       console.error('加载点云数据失败:', error)
       throw error
@@ -212,8 +218,12 @@ export class BabylonCore {
 
   // 设置点大小
   public setPointSize(size: number): void {
-    // this.spzLoader.setPointSize(size)
     this.plyLoader.setPointSize(size)
+  }
+
+  // 打印场景统计信息到控制台
+  public printSceneStatistics(): void {
+    this.sceneStats.printStatistics()
   }
 
   private createFPSDisplay(): void {
