@@ -4,6 +4,7 @@ import { PLYLoader } from './PLYLoader'
 import { GltfLoader } from './GltfLoader'
 import { Geometry } from './Geometry'
 import { SceneStats } from './SceneStats'
+import { MaterialOptimizer, MaterialCompareConfig, OptimizationResult } from './MaterialOptimizer'
 
 export class BabylonCore {
   private engine!: Engine | WebGPUEngine
@@ -19,6 +20,7 @@ export class BabylonCore {
   private lastFrameTime: number = 0
   private frameCount: number = 0
   private sceneStats!: SceneStats
+  private materialOptimizer!: MaterialOptimizer
   
 
 
@@ -33,6 +35,7 @@ export class BabylonCore {
     this.spzLoader = new SPZLoader(this.scene)
     this.plyLoader = new PLYLoader(this.scene)
     this.sceneStats = new SceneStats(this.scene)
+    this.materialOptimizer = new MaterialOptimizer(this.scene)
     this.initScene()
     this.createFPSDisplay()
   }
@@ -135,6 +138,8 @@ export class BabylonCore {
       
       // 显示场景统计信息
       this.printSceneStatistics()
+
+      this.optimizeSceneMaterials()
     });
   }
 
@@ -261,5 +266,26 @@ export class BabylonCore {
       this.frameCount = 0
       this.lastFrameTime = currentTime
     }
+  }
+
+  // 优化场景材质
+  public optimizeSceneMaterials(config?: Partial<MaterialCompareConfig>): OptimizationResult {
+    if (config) {
+      this.materialOptimizer = new MaterialOptimizer(this.scene, config)
+    }
+    return this.materialOptimizer.optimizeMaterials()
+  }
+
+  // 获取材质优化建议
+  public getMaterialOptimizationSuggestions(): string[] {
+    return this.materialOptimizer.getOptimizationSuggestions()
+  }
+
+  // 打印材质优化建议
+  public printMaterialOptimizationSuggestions(): void {
+    const suggestions = this.getMaterialOptimizationSuggestions()
+    console.group('🔧 材质优化建议')
+    suggestions.forEach(suggestion => console.log(suggestion))
+    console.groupEnd()
   }
 } 
