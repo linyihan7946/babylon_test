@@ -14,6 +14,9 @@ export class BabylonCore {
   private arcRotateCamera!: ArcRotateCamera
   private universalCamera!: UniversalCamera
   private cameraType: 'arcRotate' | 'universal' = 'universal'
+  private fpsElement!: HTMLDivElement
+  private lastFrameTime: number = 0
+  private frameCount: number = 0
   
 
 
@@ -28,6 +31,7 @@ export class BabylonCore {
     this.spzLoader = new SPZLoader(this.scene)
     this.plyLoader = new PLYLoader(this.scene)
     this.initScene()
+    this.createFPSDisplay()
   }
 
   private async initEngine() {
@@ -156,6 +160,9 @@ export class BabylonCore {
       // 手动清理渲染缓存
       this.engine.clear(new Color4(0.2, 0.2, 0.3, 1.0), true, true, true);
       this.scene.render()
+      
+      // 更新FPS显示
+      this.updateFPS()
     })
   }
 
@@ -164,6 +171,11 @@ export class BabylonCore {
   }
 
   public dispose(): void {
+    // 清理FPS显示元素
+    if (this.fpsElement && document.body.contains(this.fpsElement)) {
+      document.body.removeChild(this.fpsElement)
+    }
+    
     this.scene.dispose()
     this.engine.dispose()
   }
@@ -222,5 +234,42 @@ export class BabylonCore {
   public setPointSize(size: number): void {
     // this.spzLoader.setPointSize(size)
     this.plyLoader.setPointSize(size)
+  }
+
+  private createFPSDisplay(): void {
+    // 创建FPS显示元素
+    this.fpsElement = document.createElement('div')
+    this.fpsElement.style.position = 'fixed'
+    this.fpsElement.style.top = '10px'
+    this.fpsElement.style.left = '10px'
+    this.fpsElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'
+    this.fpsElement.style.color = '#00ff00'
+    this.fpsElement.style.padding = '8px 12px'
+    this.fpsElement.style.fontFamily = 'monospace'
+    this.fpsElement.style.fontSize = '14px'
+    this.fpsElement.style.borderRadius = '4px'
+    this.fpsElement.style.zIndex = '1000'
+    this.fpsElement.style.border = '1px solid #333'
+    this.fpsElement.textContent = 'FPS: 0'
+    
+    // 添加到页面
+    document.body.appendChild(this.fpsElement)
+    
+    // 初始化时间
+    this.lastFrameTime = performance.now()
+  }
+
+  private updateFPS(): void {
+    this.frameCount++
+    const currentTime = performance.now()
+    const deltaTime = currentTime - this.lastFrameTime
+    
+    // 每秒更新一次FPS显示
+    if (deltaTime >= 1000) {
+      const fps = Math.round((this.frameCount * 1000 / deltaTime) * 100) / 100
+      this.fpsElement.textContent = `FPS: ${fps}`
+      this.frameCount = 0
+      this.lastFrameTime = currentTime
+    }
   }
 } 
