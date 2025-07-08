@@ -47,8 +47,8 @@ export default defineComponent({
 <style scoped>
 .babylon-container {
   width: 100%;
-  height: 500px;
-  margin: 0 auto;
+  height: 90%;
+  /* margin: 0 auto; */
 }
 
 canvas {

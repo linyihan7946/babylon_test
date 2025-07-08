@@ -1,6 +1,5 @@
 <template>
   <div id="app">
-    <h1>Vue 3 + TypeScript + Babylon.js</h1>
     <BabylonScene />
   </div>
 </template>
@@ -24,6 +23,6 @@ export default defineComponent({
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  /* margin-top: 60px; */
 }
 </style> 
