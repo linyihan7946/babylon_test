@@ -1,6 +1,8 @@
 import { Engine, Scene, Vector3, HemisphericLight, MeshBuilder, ArcRotateCamera, WebGPUEngine, Mesh, StandardMaterial, Color3 } from '@babylonjs/core'
 import { SPZLoader } from './SPZLoader'
 import { PLYLoader } from './PLYLoader'
+import { GltfLoader } from './GltfLoader'
+import { Geometry } from './Geometry'
 
 export class BabylonCore {
   private engine!: Engine | WebGPUEngine
@@ -65,15 +67,34 @@ export class BabylonCore {
     // sphereMaterial.diffuseColor = new Color3(1, 0, 0)
     // sphereMaterial.alpha = 0.5
     // sphere.material = sphereMaterial
+    this.initMesh();
 
-    // 加载点云文件
-    // const url = "https://assets.babylonjs.com/splats/gs_Skull.splat";
-    // const url = 'https://raw.githubusercontent.com/CedricGuillemet/dump/master/Halo_Believe.splat';
-    const url = "https://raw.githubusercontent.com/CedricGuillemet/dump/master/racoonfamily.spz";
-    // const url = './dolphins_colored（二进制）.spz';
-    this.loadPointCloud(url).catch(error => {
-      console.error('初始化点云加载失败:', error)
-    })
+    
+  }
+
+  public initMesh(): void {
+    // 加载gltf文件
+    const gltfUrl = "./场景1.gltf";
+    GltfLoader.Instance.load(gltfUrl, this.scene).then((node) => {
+      const meshes = node.getChildMeshes();
+      const boundingBox = Geometry.Instance.getCombinedBoundingBox(meshes);
+
+      const center = boundingBox.maximum.add(boundingBox.minimum).scale(0.5);
+      const size = new Vector3(
+        boundingBox.maximum.x - boundingBox.minimum.x,
+        boundingBox.maximum.y - boundingBox.minimum.y,
+        boundingBox.maximum.z - boundingBox.minimum.z
+      );
+      const maxDimension = Math.max(size.x, size.y, size.z)
+      console.log(maxDimension)
+      this.camera.target = center
+      this.camera.radius = maxDimension * 5
+      this.camera.upperRadiusLimit = maxDimension / 2 - maxDimension / 10
+      this.camera.alpha = 0
+      this.camera.beta = Math.PI / 3
+
+      console.log('gltf加载完成')
+    });
   }
 
   public startRenderLoop(): void {
