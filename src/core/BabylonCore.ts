@@ -1,4 +1,4 @@
-import { Engine, Scene, Vector3, HemisphericLight, MeshBuilder, UniversalCamera, ArcRotateCamera, WebGPUEngine, Mesh, StandardMaterial, Color3 } from '@babylonjs/core'
+import { Engine, Scene, Vector3, HemisphericLight, MeshBuilder, UniversalCamera, ArcRotateCamera, WebGPUEngine, Mesh, StandardMaterial, Color3, Color4 } from '@babylonjs/core'
 import { SPZLoader } from './SPZLoader'
 import { PLYLoader } from './PLYLoader'
 import { GltfLoader } from './GltfLoader'
@@ -32,12 +32,22 @@ export class BabylonCore {
 
   private async initEngine() {
     try {
-      // 直接使用WebGL2.0引擎
+      // 直接使用WebGL2.0引擎，添加性能优化设置
       this.engine = new Engine(this.canvas, true, {
         antialias: true,
         adaptToDeviceRatio: true,
-        powerPreference: "high-performance"
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: false,
+        stencil: false,
+        premultipliedAlpha: false,
+        alpha: false,
+        desynchronized: true,
+        audioEngine: false
       });
+      
+      // 性能优化设置
+      this.engine.setHardwareScalingLevel(1);
+      
       console.log('WebGL2.0引擎初始化成功');
     } catch (error) {
       console.error('WebGL2.0引擎初始化失败:', error);
@@ -46,6 +56,14 @@ export class BabylonCore {
   }
 
   private initScene(): void {
+    // 场景性能优化设置
+    this.scene.skipPointerMovePicking = true;
+    this.scene.skipPointerUpPicking = true;
+    this.scene.skipPointerDownPicking = true;
+    this.scene.autoClear = false;
+    this.scene.autoClearDepthAndStencil = false;
+    this.scene.blockMaterialDirtyMechanism = true;
+    
     // 创建相机
     if (this.cameraType === 'arcRotate') {
       this.arcRotateCamera = new ArcRotateCamera(
@@ -135,6 +153,8 @@ export class BabylonCore {
 
   public startRenderLoop(): void {
     this.engine.runRenderLoop(() => {
+      // 手动清理渲染缓存
+      this.engine.clear(new Color4(0.2, 0.2, 0.3, 1.0), true, true, true);
       this.scene.render()
     })
   }
