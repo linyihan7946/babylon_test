@@ -5,6 +5,7 @@ import { GltfLoader } from './GltfLoader'
 import { Geometry } from './Geometry'
 import { SceneStats } from './SceneStats'
 import { MaterialOptimizer, MaterialCompareConfig, OptimizationResult } from './MaterialOptimizer'
+import { MeshInstancer, InstancerConfig, InstancerResult } from './MeshInstancer'
 
 export class BabylonCore {
   private engine!: Engine | WebGPUEngine
@@ -21,6 +22,7 @@ export class BabylonCore {
   private frameCount: number = 0
   private sceneStats!: SceneStats
   private materialOptimizer!: MaterialOptimizer
+  private meshInstancer!: MeshInstancer
   
 
 
@@ -36,6 +38,7 @@ export class BabylonCore {
     this.plyLoader = new PLYLoader(this.scene)
     this.sceneStats = new SceneStats(this.scene)
     this.materialOptimizer = new MaterialOptimizer(this.scene)
+    this.meshInstancer = new MeshInstancer(this.scene)
     this.initScene()
     this.createFPSDisplay()
   }
@@ -140,6 +143,7 @@ export class BabylonCore {
       this.printSceneStatistics()
 
       this.optimizeSceneMaterials()
+      this.createMeshInstances()
     });
   }
 
@@ -285,6 +289,27 @@ export class BabylonCore {
   public printMaterialOptimizationSuggestions(): void {
     const suggestions = this.getMaterialOptimizationSuggestions()
     console.group('🔧 材质优化建议')
+    suggestions.forEach(suggestion => console.log(suggestion))
+    console.groupEnd()
+  }
+
+  // 创建网格实例
+  public createMeshInstances(config?: Partial<InstancerConfig>): InstancerResult {
+    if (config) {
+      this.meshInstancer = new MeshInstancer(this.scene, config)
+    }
+    return this.meshInstancer.createInstances()
+  }
+
+  // 获取网格实例化建议
+  public getMeshInstanceSuggestions(): string[] {
+    return this.meshInstancer.getOptimizationSuggestions()
+  }
+
+  // 打印网格实例化建议
+  public printMeshInstanceSuggestions(): void {
+    const suggestions = this.getMeshInstanceSuggestions()
+    console.group('🔧 网格实例化建议')
     suggestions.forEach(suggestion => console.log(suggestion))
     console.groupEnd()
   }
