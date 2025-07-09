@@ -103,8 +103,24 @@ export class MeshMerger {
       group.originalVertexCount += (mesh as BABYLON.Mesh).getTotalVertices()
     })
     
-    // 过滤掉只有一个网格的组
-    return Array.from(materialMap.values()).filter(group => group.meshes.length > 1)
+    // 过滤掉只有一个网格的组，并检查顶点属性兼容性
+    return Array.from(materialMap.values()).filter(group => {
+      if (group.meshes.length <= 1) {
+        return false
+      }
+      
+      // 检查是否所有网格都有有效的几何体
+      const validMeshes = group.meshes.filter(mesh => 
+        mesh.geometry && mesh.getTotalVertices() > 0
+      )
+      
+      if (validMeshes.length !== group.meshes.length) {
+        console.warn(`⚠️ 材质组 ${group.materialId} 中有网格缺少有效几何体`)
+        group.meshes = validMeshes
+      }
+      
+      return group.meshes.length > 1
+    })
   }
 
   // 判断网格是否可以合并
@@ -191,9 +207,12 @@ export class MeshMerger {
   // 合并单个材质组
   private _mergeMeshGroup(group: MaterialGroup, groupIndex: number): BABYLON.Mesh | null {
     try {
+      // 标准化网格顶点属性
+      const normalizedMeshes = this._normalizeVertexAttributes(group.meshes)
+      
       // 使用Babylon.js的MergeMeshes方法
       const mergedMesh = BABYLON.Mesh.MergeMeshes(
-        group.meshes,
+        normalizedMeshes,
         true,  // disposeSource - 是否删除源网格
         true,  // allow32BitsIndices - 允许32位索引
         undefined, // meshSubclass
@@ -247,6 +266,137 @@ export class MeshMerger {
     } catch (error) {
       console.error(`❌ 合并网格组失败:`, error)
       return null
+    }
+  }
+
+  // 标准化顶点属性
+  private _normalizeVertexAttributes(meshes: BABYLON.Mesh[]): BABYLON.Mesh[] {
+    if (meshes.length === 0) return meshes
+    
+    // 收集所有网格的顶点属性
+    const allAttributes = new Set<string>()
+    const meshAttributes: Map<BABYLON.Mesh, string[]> = new Map()
+    
+    meshes.forEach(mesh => {
+      if (!mesh.geometry) return
+      
+      const attributes: string[] = []
+      const vertexData = mesh.geometry.getVerticesData(BABYLON.VertexBuffer.PositionKind)
+      if (vertexData) {
+        attributes.push(BABYLON.VertexBuffer.PositionKind)
+        allAttributes.add(BABYLON.VertexBuffer.PositionKind)
+      }
+      
+      // 检查其他常见属性
+      const commonAttributes = [
+        BABYLON.VertexBuffer.NormalKind,
+        BABYLON.VertexBuffer.UVKind,
+        BABYLON.VertexBuffer.UV2Kind,
+        BABYLON.VertexBuffer.ColorKind,
+        BABYLON.VertexBuffer.TangentKind
+      ]
+      
+      commonAttributes.forEach(attr => {
+        const data = mesh.geometry!.getVerticesData(attr)
+        if (data) {
+          attributes.push(attr)
+          allAttributes.add(attr)
+        }
+      })
+      
+      meshAttributes.set(mesh, attributes)
+    })
+    
+    console.log(`🔍 发现顶点属性: ${Array.from(allAttributes).join(', ')}`)
+    
+    // 为每个网格补齐缺失的属性
+    meshes.forEach(mesh => {
+      if (!mesh.geometry) return
+      
+      const existingAttributes = meshAttributes.get(mesh) || []
+      const missingAttributes = Array.from(allAttributes).filter(attr => 
+        !existingAttributes.includes(attr)
+      )
+      
+      if (missingAttributes.length > 0) {
+        console.log(`📝 为网格 ${mesh.name} 补齐属性: ${missingAttributes.join(', ')}`)
+        
+        missingAttributes.forEach(attr => {
+          this._addMissingVertexAttribute(mesh, attr)
+        })
+      }
+    })
+    
+    return meshes
+  }
+
+  // 为网格添加缺失的顶点属性
+  private _addMissingVertexAttribute(mesh: BABYLON.Mesh, attributeKind: string): void {
+    if (!mesh.geometry) return
+    
+    const vertexCount = mesh.getTotalVertices()
+    if (vertexCount === 0) return
+    
+    let defaultData: Float32Array | null = null
+    
+    switch (attributeKind) {
+      case BABYLON.VertexBuffer.NormalKind:
+        // 创建默认法线（向上）
+        defaultData = new Float32Array(vertexCount * 3)
+        for (let i = 0; i < vertexCount; i++) {
+          defaultData[i * 3] = 0      // x
+          defaultData[i * 3 + 1] = 1  // y (向上)
+          defaultData[i * 3 + 2] = 0  // z
+        }
+        break
+        
+      case BABYLON.VertexBuffer.UVKind:
+        // 创建默认UV坐标
+        defaultData = new Float32Array(vertexCount * 2)
+        for (let i = 0; i < vertexCount; i++) {
+          defaultData[i * 2] = 0      // u
+          defaultData[i * 2 + 1] = 0  // v
+        }
+        break
+        
+      case BABYLON.VertexBuffer.UV2Kind:
+        // 创建默认第二套UV坐标
+        defaultData = new Float32Array(vertexCount * 2)
+        for (let i = 0; i < vertexCount; i++) {
+          defaultData[i * 2] = 0      // u
+          defaultData[i * 2 + 1] = 0  // v
+        }
+        break
+        
+      case BABYLON.VertexBuffer.ColorKind:
+        // 创建默认颜色（白色）
+        defaultData = new Float32Array(vertexCount * 4)
+        for (let i = 0; i < vertexCount; i++) {
+          defaultData[i * 4] = 1      // r
+          defaultData[i * 4 + 1] = 1  // g
+          defaultData[i * 4 + 2] = 1  // b
+          defaultData[i * 4 + 3] = 1  // a
+        }
+        break
+        
+      case BABYLON.VertexBuffer.TangentKind:
+        // 创建默认切线
+        defaultData = new Float32Array(vertexCount * 4)
+        for (let i = 0; i < vertexCount; i++) {
+          defaultData[i * 4] = 1      // x
+          defaultData[i * 4 + 1] = 0  // y
+          defaultData[i * 4 + 2] = 0  // z
+          defaultData[i * 4 + 3] = 1  // w
+        }
+        break
+        
+      default:
+        console.warn(`⚠️ 不支持的顶点属性类型: ${attributeKind}`)
+        return
+    }
+    
+    if (defaultData) {
+      mesh.geometry.setVerticesData(attributeKind, defaultData, false)
     }
   }
 
